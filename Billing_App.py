@@ -1,7 +1,5 @@
 import sys
-from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QLineEdit,
-                                     QPushButton, QVBoxLayout, QHBoxLayout, QTableWidget,
-                                     QTableWidgetItem, QDateEdit, QMessageBox, QComboBox)
+from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, QDateEdit, QMessageBox, QComboBox)
 import mysql.connector
 from datetime import datetime
 
@@ -11,7 +9,7 @@ class BillingApp(QWidget):
 
         self.init_ui()
         self.init_db()
-        self.load_customers()  # Load customers into the combo box
+        self.load_customers()
 
     def init_ui(self):
         # Customer Input
@@ -24,10 +22,12 @@ class BillingApp(QWidget):
         self.save_customer_button = QPushButton("Save Customer")
 
         # Bill Input
-        self.customer_combo = QComboBox()  # Dropdown to select customer
+        self.customer_combo = QComboBox()
         self.bill_date_label = QLabel("Bill Date:")
         self.bill_date_input = QDateEdit()
         self.bill_date_input.setDate(datetime.now().date())
+        self.product_label = QLabel("Product:")
+        self.product_input = QLineEdit()
         self.total_amount_label = QLabel("Total Amount:")
         self.total_amount_input = QLineEdit()
         self.save_bill_button = QPushButton("Save Bill")
@@ -55,6 +55,8 @@ class BillingApp(QWidget):
         bill_layout.addWidget(self.customer_combo)
         bill_layout.addWidget(self.bill_date_label)
         bill_layout.addWidget(self.bill_date_input)
+        bill_layout.addWidget(self.product_label)
+        bill_layout.addWidget(self.product_input)
         bill_layout.addWidget(self.total_amount_label)
         bill_layout.addWidget(self.total_amount_input)
         bill_layout.addWidget(self.save_bill_button)
@@ -83,8 +85,8 @@ class BillingApp(QWidget):
         try:
             self.mydb = mysql.connector.connect(
                 host="localhost",
-                user="root",  # Replace with your MySQL username
-                password="Rkc@1249",  # Replace with your MySQL password
+                user="root",
+                password="Rkc@1249",
                 database="billing_system"
             )
             self.mycursor = self.mydb.cursor()
@@ -116,14 +118,15 @@ class BillingApp(QWidget):
     def save_bill(self):
         customer_id = self.customer_combo.currentData()
         bill_date = self.bill_date_input.date().toString("yyyy-MM-dd")
+        product_name = self.product_input.text()
         total_amount = self.total_amount_input.text()
 
         if not customer_id:
             QMessageBox.warning(self, "Warning", "Please select a customer.")
             return
 
-        sql = "INSERT INTO bills (customer_id, bill_date, total_amount) VALUES (%s, %s, %s)"
-        val = (customer_id, bill_date, total_amount)
+        sql = "INSERT INTO bills (customer_id, bill_date, product_name, total_amount) VALUES (%s, %s, %s, %s)"
+        val = (customer_id, bill_date, product_name, total_amount)
         self.mycursor.execute(sql, val)
         self.mydb.commit()
 
@@ -148,7 +151,7 @@ class BillingApp(QWidget):
 
         self.bills_table.setRowCount(len(results))
         self.bills_table.setColumnCount(len(results[0]))
-        self.bills_table.setHorizontalHeaderLabels(["ID", "Customer ID", "Bill Date", "Total Amount"])
+        self.bills_table.setHorizontalHeaderLabels(["ID", "Customer ID", "Bill Date", "Product Name", "Total Amount"])
 
         for row_index, row_data in enumerate(results):
             for col_index, cell_data in enumerate(row_data):
@@ -159,6 +162,7 @@ class BillingApp(QWidget):
         self.address_input.clear()
         self.phone_input.clear()
         self.total_amount_input.clear()
+        self.product_input.clear()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
